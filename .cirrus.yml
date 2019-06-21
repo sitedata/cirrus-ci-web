@@ -10,13 +10,37 @@ build_task:
   relay_script: npm run relay
   build_script: npm run build
 
-deploy_docker_builder:
-  only_if: $CIRRUS_BRANCH == "master"
-  depends_on: build
-  environment:
-    DOCKER_USER_NAME: ENCRYPTED[5eb941ed91706fab3eb53bfd01dc3b88caee18e11f9df18b4663875f83e9e390eeb0db087278035b61bf5b24e8f96328]
-    DOCKER_PASSWORD: ENCRYPTED[5e9b3eb1391a7a0cf259c41920ce60d034660cc49f0b85b2738eb53d9a537b90d0d2173d6321096facd11f5e5a9e31c3]
+makisu_docker_task:
+  env:
+    CIRRUS_SHELL: direct
+    CIRRUS_WORKING_DIR: /makisu-context
+  container:
+    image: gcr.io/makisu-project/makisu:v0.1.11
   build_script:
-    - docker --version
-    - ./.ci/build_docker.sh
-  push_script: ./.ci/push_docker.sh
+    /makisu-internal/makisu build
+      --http-cache-addr="http://$CIRRUS_HTTP_CACHE_HOST"
+      --tag cirrusci/web-front-end:makisu
+      --commit=explicit
+      --modifyfs=true
+      /makisu-context
+
+makisu_push_task:
+  environment:
+    DOCKER_CONFIG: ENCRYPTED[058fb42cbf79a6b0c0f29ef5adab49440cbe49a61a6f622351cddc1b478ac0bd46508eed6927e1ae3c02197e8f06e0c9]
+  env:
+    CIRRUS_SHELL: direct
+    CIRRUS_WORKING_DIR: /makisu-context
+  container:
+    image: gcr.io/makisu-project/makisu:v0.1.11
+  docker_config_file:
+    path: /root/.docker/config
+    variable_name: DOCKER_CONFIG
+  build_script:
+    /makisu-internal/makisu build
+      --http-cache-addr="http://$CIRRUS_HTTP_CACHE_HOST"
+      --registry-config=/root/.docker/config
+      --tag cirrusci/web-front-end:makisu
+      --commit=explicit
+      --modifyfs=true
+      --push=index.docker.io
+      /makisu-context
