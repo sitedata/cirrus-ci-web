@@ -9,7 +9,7 @@ ENV GENERATE_SOURCEMAP true
 ENV NODE_ENV production
 
 ADD . /tmp/cirrus-ci-web/
-RUN npm run relay && npm run build
+RUN pwd && ls && npm run relay && npm run build
 
 FROM node:12-alpine
 
