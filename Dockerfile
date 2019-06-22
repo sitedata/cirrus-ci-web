@@ -8,6 +8,7 @@ RUN npm ci #!COMMIT
 ENV GENERATE_SOURCEMAP true
 ENV NODE_ENV production
 
+RUN pwd && ls
 ADD . /tmp/cirrus-ci-web/
 RUN pwd && ls && npm run relay && npm run build
 
